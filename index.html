@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <link href="style.css" rel="stylesheet">
+
+    <title>Chat App</title>
+</head>
+
+<body>
+    <div class="container p-2">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Chat</div>
+                    </div>
+                    <div class="card-body message-panel" id="message-panel">
+                        <ul id="messages" class="list-unstyled"></ul>
+                    </div>
+                    <div class="card-footer">
+                        <form id="chatForm" action="">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" placeholder="Type your message here..."
+                                    aria-label="message" aria-describedby="sendButton" id="messageInput">
+                                <button class="btn btn-primary" type="submit" id="sendButton">Send</button>
+                            </div>
+                        </form>
+                        <p class="small text-info" id="typing-message"></p>
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Who's online</div>
+                    </div>
+                    <div class="card-body users-panel">
+                        <ul id="online-users"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="joinChatModal" data-bs-backdrop="static" tabindex="-1"
+        aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Join chat</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <input type="text" id="username" placeholder="Type your name here..." class="form-control" />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="joinButton">Join now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        var messages = document.getElementById('messages');
+        var form = document.getElementById('chatForm');
+        var input = document.getElementById('messageInput');
+        var username = document.getElementById('username');
+        var joinButton = document.getElementById('joinButton');
+        var onlineUsers = document.getElementById('online-users');
+        var messagePanel = document.getElementById('message-panel');
+        var typingMessage = document.getElementById('typing-message');
+        var joinModal = new bootstrap.Modal(document.getElementById('joinChatModal'), {
+            keyboad: false
+        })
+
+        joinModal.show();
+
+        joinButton.addEventListener('click', function () {
+            if (username.value.length >= 5 && username.value.length <= 20) {
+                socket.emit('join', username.value);
+                joinModal.hide();
+            } else {
+                alert('Username must be 5 to 20 char long');
+            }
+        });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('chat message', input.value);
+                input.value = '';
+            }
+        });
+
+        input.addEventListener('keydown', function (e) {
+            if (e.keyCode !== 8 || e.keyCode !== 46) {
+                socket.emit('typing');
+            }
+        })
+
+        socket.on('chat message', function (msg, user) {
+            var item = document.createElement('li');
+            item.textContent = `[${user}]: ${msg}`
+            messages.appendChild(item);
+            messagePanel.scrollTo(0, messagePanel.scrollHeight);
+        });
+
+        socket.on('typing', (msg) => {
+            typingMessage.innerHTML = msg
+            setTimeout(() => {
+                typingMessage.innerHTML = ''
+            }, 3000);
+        });
+
+        socket.on('update-users', function (users) {
+            onlineUsers.innerHTML = '';
+            Object.values(users).forEach((usr) => {
+                let usersLi = document.createElement('li');
+                usersLi.textContent = usr;
+                onlineUsers.appendChild(usersLi);
+            });
+        });
+
+        socket.on('update', function (msg) {
+            let item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+        })
+    </script>
+
+
+
+</body>
+
+</html>

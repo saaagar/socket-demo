@@ -1,0 +1,8 @@
+.message-panel {
+    height: 70vh;
+    overflow-y: scroll;
+}
+.users-panel {
+    height : 70vh;
+    overflow-y: scroll;
+}
