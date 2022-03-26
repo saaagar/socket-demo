@@ -1,6 +1,3 @@
-## Demo 
-https://simple-chat-app-dev.herokuapp.com/ 
-
 ## Simple chat app
 This app uses socket.io for dispatching and subscribing events.
 
